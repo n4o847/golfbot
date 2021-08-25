@@ -117,16 +117,17 @@ export const run = async ({
       stream.end(stdin);
       await container.wait();
       const inspectInfo = await container.inspect();
-      await container.remove();
       return inspectInfo;
     })(),
-  ]).catch(async (error) => {
-    await container.kill();
-    await container.remove();
-    throw error;
-  });
-
-  await tmpDir.cleanup();
+  ])
+    .catch(async (error) => {
+      await container.kill();
+      throw error;
+    })
+    .finally(async () => {
+      await container.remove();
+      await tmpDir.cleanup();
+    });
 
   return {
     stdout: Buffer.concat(stdoutChunks),
